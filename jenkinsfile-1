@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    tools {
+        maven 'maven' // Name must match the Maven installation in Jenkins Global Tool Configuration
+        jdk 'jdk-17'   // Name should match the name configured in Global Tool Configuration for JDK 17
+         
+    }
+    environment {
+        SONARQUBE = 'SonarQube_Server' // Name of the SonarQube server in Jenkins configuration
+      JAVA_HOME = '/Library/Java/JavaVirtualMachines/openlogic-openjdk-17.jdk/Contents/Home'  // Set JAVA_HOME explicitly
+        PATH = "$JAVA_HOME/bin:$PATH"  // Update PATH to include Java 17 binaries
+    }
+    stages {
+        stage('Verify JAVA_HOME') {
+            steps {
+                sh 'echo $JAVA_HOME'  // This should print the JDK 17 path in the job logs
+                sh 'java -version'    // This should print the version of JDK 17
+            }
+        }
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") { 
+                    sh 'mvn sonar:sonar'
+
+                }
+            }
+        }
+    }
+}
